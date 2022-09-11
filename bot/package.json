@@ -1,0 +1,31 @@
+{
+  "name": "discord-bot-wathing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LorexIQ/discord-bot-wathing.git"
+  },
+  "keywords": [
+    "bot",
+    "discord",
+    "wathing"
+  ],
+  "author": "LorexIQ",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LorexIQ/discord-bot-wathing/issues"
+  },
+  "homepage": "https://github.com/LorexIQ/discord-bot-wathing#readme",
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "discord.js": "^14.3.0",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1"
+  }
+}
