@@ -17,7 +17,12 @@ let members = []
 app.get('/getMembers', (req, res) => {
     members = []
     for (const server of client.guilds.cache) {
-        server[1].members.cache.forEach(member => !member.user.bot && members.push({...member, user: {...member.user}}));
+        server[1].members.cache.forEach(member => !member.user.bot && members.push({
+            ...member,
+            presence: member.presence,
+            avatar: member.displayAvatarURL({}),
+            user: {...member.user}
+        }));
     }
     res.set('Access-Control-Allow-Origin', '*')
     res.send(members)
@@ -46,7 +51,7 @@ client.on('ready', () => {
 });
 
 client.on('presenceUpdate', (oldU, newU) => {
-    console.log(newU)
+    //console.log(newU)
 });
 
 client.login(dotenv.BOT_TOKEN);

@@ -3,6 +3,7 @@
     <table class="l-client__table">
       <thead>
         <tr>
+          <th>Photo</th>
           <th>Username</th>
           <th>Nickname</th>
           <th>Notifications</th>
@@ -10,20 +11,49 @@
       </thead>
       <tbody>
         <tr
+          class="l-client__table__user"
           v-for="user in usersArray"
           :key="user.id"
         >
+          <td class="l-client__table__user__avatar">
+            <svg
+              width="40" height="32"
+              viewBox="0 0 40 32"
+              aria-hidden="true"
+            >
+              <mask id="61df254d-f640-4c3b-b18c-e5d7f28ce21e" width="32" height="32">
+                <circle cx="16" cy="16" r="16" fill="#FFFFFF"></circle>
+                <rect color="black" x="19" y="19" width="16" height="16" rx="8" ry="8"></rect>
+              </mask>
+              <foreignObject
+                x="0" y="0"
+                width="32" height="32"
+                mask="url(#61df254d-f640-4c3b-b18c-e5d7f28ce21e)"
+              >
+                <div>
+                  <img
+                    :src="user.avatar + '?size=32'"
+                    alt="" aria-hidden="true"
+                  >
+                </div>
+              </foreignObject>
+              <svg
+                x="14.5" y="17"
+                v-html="svgDiscordStatus.getSVG(user.presence)"
+              ></svg>
+              <rect x="22" y="22" width="10" height="10" fill="#000000" aria-hidden="true" fill-opacity="0"></rect>
+            </svg>
+          </td>
           <td>{{user.user.username}}</td>
           <td>{{user.nickname}}</td>
           <td>
-            <div class="l-client__table__bumbles-notify">
+            <div class="l-client__table__user__notify-settings">
               <div
-                class="l-client__table__bumbles-notify__bumble"
-                v-for="(state, index) in Object.keys(status)"
-                :key="index"
-                :style="`color: ${status[state].color}; ${status[state].rotate ? `transform: rotate(${status[state].rotate})` : ''}`"
+                class="l-client__table__user__notify-settings__box"
+                v-for="state in status"
+                :key="state"
               >
-                <lfa :icon="status[state].icon"></lfa>
+                <svg width="100%" height="100%" v-html="svgDiscordStatus.getSVG({ status: state }, 1.3)"></svg>
               </div>
             </div>
           </td>
@@ -40,23 +70,40 @@ export default {
     return {
       usersArray: [],
       usersSettingsObject: {},
-      status: {
-        online: {
-          color: '#3ba55d',
-          icon: 'circle'
-        },
-        idle: {
-          color: '#faa81a',
-          icon: 'moon',
-          rotate: '250deg'
-        },
-        dnd: {
-          color: '#ed4245',
-          icon: 'minus-circle'
-        },
-        offline: {
-          color: '#737e8c',
-          icon: 'circle'
+      status: [
+        'online',
+        'idle',
+        'dnd',
+        'offline'
+      ],
+      svgDiscordStatus: {
+        getSVG: (presence, scale=1) => {
+          return `
+            <svg width="25" height="15" viewBox="0 0 25 15" style="transform: scale(${scale});">
+              <mask id="mask-id-${presence ? presence.status : 'default'}">
+                <rect x="7.5" y="5" width="10" height="10" rx="5" ry="5" fill="#FFFFFF"></rect>
+                <rect
+                  ${presence ? presence.status === 'online' ? 'x="12.5" y="10" width="0" height="0" rx="0" ry="0" fill="black"' :
+                    presence.status === 'idle' ? 'x="6.25" y="3.75" width="7.5" height="7.5" rx="3.75" ry="3.75" fill="black"' :
+                    presence.status === 'dnd' ? 'x="8.75" y="8.75" width="7.5" height="2.5" rx="1.25" ry="1.25" fill="black"' :
+                    'x="10" y="7.5" width="5" height="5" rx="2.5" ry="2.5" fill="black"' :
+                    'x="10" y="7.5" width="5" height="5" rx="2.5" ry="2.5" fill="black"'}
+                ></rect>
+                <polygon
+                  points="-2.16506,-2.5 2.16506,0 -2.16506,2.5" fill="black"
+                  transform="scale(0) translate(13.125 10)" style="transform-origin: 13px 10px 0;"
+                ></polygon>
+                <circle fill="black" cx="12.5" cy="10" r="0"></circle>
+              </mask>
+              <rect
+                  ${presence ? presence.status === 'online' ? `fill="hsl(139, calc(var(--saturation-factor, 1) * 47.3%), 43.9%)" width="25" height="15" mask="url(#mask-id-${presence.status})"` :
+                  presence.status === 'idle' ? `fill="hsl(38, calc(var(--saturation-factor, 1) * 95.7%), 54.1%)" width="25" height="15" mask="url(#mask-id-${presence.status})"` :
+                  presence.status === 'dnd' ? `fill="hsl(359, calc(var(--saturation-factor, 1) * 82.6%), 59.4%)" width="25" height="15" mask="url(#mask-id-${presence.status})"` :
+                  `fill="hsl(214, calc(var(--saturation-factor, 1) * 9.9%), 50.4%)" width="25" height="15" mask="url(#mask-id-default)"` :
+                  `fill="hsl(214, calc(var(--saturation-factor, 1) * 9.9%), 50.4%)" width="25" height="15" mask="url(#mask-id-default)"`}
+              ></rect>
+            </svg>
+          `
         }
       }
     }
@@ -88,18 +135,23 @@ export default {
 
 <style lang="scss">
 .l-client {
+  display: flex;
+  justify-content: center;
+  max-width: 700px;
+  margin: 0 auto;
   &__table {
-    &__bumbles-notify {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      &__bumble {
+    &__user {
+      &__avatar {
+        & img {
+          width: 32px;
+        }
+      }
+      &__notify-settings {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 20px;
-        height: 20px;
-        border-radius: 100%;
+        &__box {
+          width: 30px;
+          height: 30px;
+        }
       }
     }
   }
