@@ -39,7 +39,7 @@
               </foreignObject>
               <svg
                 x="14.5" y="17"
-                v-html="svgDiscordStatus.getSVG(user.presence)"
+                v-html="svgDiscordStatus.getAvaSVG(user.presence)"
               ></svg>
               <rect x="22" y="22" width="10" height="10" fill="#000000" aria-hidden="true" fill-opacity="0"></rect>
             </svg>
@@ -49,17 +49,19 @@
           <td>
             <div class="l-client__table__user__notify-settings">
               <div
+                :class="!(usersSettingsObject[user.user.id] && usersSettingsObject[user.user.id][state]) && 'l-client__table__user__notify-settings__box--disabled'"
                 class="l-client__table__user__notify-settings__box"
                 v-for="state in status"
                 :key="state"
-              >
-                <svg width="100%" height="100%" v-html="svgDiscordStatus.getSVG({ status: state }, 1.3)"></svg>
-              </div>
+                v-html="svgDiscordStatus.getSVG(state, 16)"
+                @click="editSetting(user.user.id, state, usersSettingsObject[user.user.id] ? !usersSettingsObject[user.user.id][state] : true)"
+              />
             </div>
           </td>
         </tr>
       </tbody>
     </table>
+    <svg-mask />
   </div>
 </template>
 
@@ -77,9 +79,33 @@ export default {
         'offline'
       ],
       svgDiscordStatus: {
-        getSVG: (presence, scale=1) => {
+        getSVG: (status, size=12) => {
           return `
-            <svg width="25" height="15" viewBox="0 0 25 15" style="transform: scale(${scale});">
+            <svg
+              width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"
+            >
+              <foreignObject
+                x="0" y="0" width="${size}" height="${size}"
+                overflow="visible" mask="url(#svg-mask-status-${status})"
+              >
+                <div
+                  class="svg-box-element"
+                  style="background-color: ${
+                           status === 'online' ? 'hsl(139, 47.3%, 43.9%)' :
+                           status === 'idle' ? 'hsl(38, 95.7%, 54.1%)' :
+                           status === 'dnd' ? 'hsl(359, 82.6%, 59.4%)' :
+                           'hsl(214, 9.9%, 50.4%)'
+                  }; width: 100%; height: 100%;"
+                  bis_skin_checked="1"
+                >
+                </div>
+              </foreignObject>
+            </svg>
+          `
+        },
+        getAvaSVG: (presence) => {
+          return `
+            <svg width="25" height="15" viewBox="0 0 25 15">
               <mask id="mask-id-${presence ? presence.status : 'default'}">
                 <rect x="7.5" y="5" width="10" height="10" rx="5" ry="5" fill="#FFFFFF"></rect>
                 <rect
@@ -105,7 +131,7 @@ export default {
             </svg>
           `
         }
-      }
+      },
     }
   },
   mounted() {
@@ -120,14 +146,32 @@ export default {
     })
   },
   methods: {
-    async setMemberSettingsInAPI() {
-      return await this.$axios.post('/setMemberSettings/123', { test: 1, test_qs: 2 })
+    async setMemberSettingsInAPI(id, newData) {
+      return await this.$axios.post(`/setMemberSettings/${id}`, newData)
     },
     async getAllMembersFromAPI() {
       return await this.$axios.get('/getMembers')
     },
     async getAllMembersSettingsFromAPI() {
       return await this.$axios.get('/getMembersSettings')
+    },
+
+    editSetting(id, statusKey, newStatus) {
+      let userSetting = this.usersSettingsObject[id]
+      if (!userSetting) {
+        userSetting = { [statusKey]: true }
+      } else {
+        this.$set(userSetting, statusKey, newStatus)
+      }
+      this.$set(this.usersSettingsObject, id, userSetting)
+
+      Promise.all([
+        this.setMemberSettingsInAPI(id, userSetting)
+      ])
+        .then()
+        .catch(err => {
+          console.error(new Error('Ошибка отправки данных'))
+        })
     }
   }
 }
@@ -148,9 +192,16 @@ export default {
       }
       &__notify-settings {
         display: flex;
+        justify-content: space-between;
         &__box {
-          width: 30px;
-          height: 30px;
+          width: 16px;
+          height: 16px;
+          cursor: pointer;
+          &--disabled {
+            & .svg-box-element {
+              background-color: rgba(0, 0, 0, 0.7) !important;
+            }
+          }
         }
       }
     }

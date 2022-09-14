@@ -28,9 +28,9 @@ app.get('/getMembers', (req, res) => {
     res.send(members)
 })
 app.get('/getMembersSettings', (req, res) => {
-    let usersSetting = [{}]
+    let usersSetting = {}
     try {
-        usersSetting = JSON.parse(fs.readFileSync('./static/usersSettings.json', 'utf8'))
+        usersSetting = JSON.parse(fs.readFileSync(__dirname + '/bd/usersSettings.json', 'utf8'))
     } catch (err) {
         console.error('Пользовательские настройки не найдены. Используются настройки по умолчанию')
     }
@@ -40,10 +40,11 @@ app.post('/setMemberSettings/:id', (req, res) => {
     const id = req.params.id
     let usersSetting = {}
     try {
-        usersSetting = JSON.parse(fs.readFileSync('./static/usersSettings.json', 'utf8'))
+        usersSetting = JSON.parse(fs.readFileSync(__dirname + '/bd/usersSettings.json', 'utf8'))
     } catch (err) {}
     usersSetting[id] = req.body
-    res.send({1: req.body, 2: 'sended'})
+    fs.writeFile(__dirname + '/bd/usersSettings.json', JSON.stringify(usersSetting), 'utf-8', () => {})
+    res.send({ message: 'Данные успешно сохранены' })
 })
 
 client.on('ready', () => {
